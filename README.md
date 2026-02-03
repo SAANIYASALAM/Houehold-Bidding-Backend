@@ -148,21 +148,22 @@ For production, change the `SecretKey` in `appsettings.json`:
 
 5. **Create Database**
 
-**Option 1: Using .NET CLI (Recommended)**
+> **Important:** This project uses Entity Framework Core (EF Core), not EF6. 
+> - ✅ Use: `dotnet ef database update` 
+> - ❌ Don't use: `Update-Database` (that's for EF6, not EF Core)
+
+**Option 1: Using Terminal/Command Prompt (Recommended)**
 ```bash
 dotnet ef database update
 ```
 
 **Option 2: Using Package Manager Console (Visual Studio)**
 
-First, ensure EF Core tools are installed (see step 2), then in Package Manager Console:
+In Visual Studio, open Package Manager Console (Tools → NuGet Package Manager → Package Manager Console) and run:
 ```powershell
-# If you prefer PowerShell commands in VS, use:
 dotnet ef database update
-
-# Note: The 'Update-Database' command is from Entity Framework 6.
-# For EF Core projects, use 'dotnet ef database update' instead.
 ```
+(This is the same command as Option 1, just run from within Visual Studio)
 
 6. **Run the Application**
 ```bash
