@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Household-Bidding")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ba6af04ba05b827a72b2084404db88843f34c079")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+eb33a3e2c9cbe01e6c1f1263c9d20ba24d3e7740")]
 [assembly: System.Reflection.AssemblyProductAttribute("Household-Bidding")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Household-Bidding")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

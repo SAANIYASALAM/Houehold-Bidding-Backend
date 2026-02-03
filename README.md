@@ -160,8 +160,7 @@ First, ensure EF Core tools are installed (see step 2), then in Package Manager 
 # If you prefer PowerShell commands in VS, use:
 dotnet ef database update
 
-# Note: The 'Update-Database' command is a PowerShell-specific command 
-# that requires the older EF6 tools or special configuration.
+# Note: The 'Update-Database' command is from Entity Framework 6.
 # For EF Core projects, use 'dotnet ef database update' instead.
 ```
 
