@@ -101,6 +101,7 @@ Public endpoints.
 - .NET 8 SDK
 - SQL Server (or SQL Server Express)
 - Visual Studio 2022 or VS Code
+- Entity Framework Core Tools (install below)
 
 ### Setup
 
@@ -110,7 +111,22 @@ git clone <repository-url>
 cd Houehold-Bidding-Backend
 ```
 
-2. **Update Connection String**
+2. **Install EF Core Tools** (Required for database migrations)
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+If already installed, update to the latest version:
+```bash
+dotnet tool update --global dotnet-ef
+```
+
+Verify installation:
+```bash
+dotnet ef --version
+```
+
+3. **Update Connection String**
 Edit `appsettings.json` and update the connection string:
 ```json
 "ConnectionStrings": {
@@ -118,7 +134,7 @@ Edit `appsettings.json` and update the connection string:
 }
 ```
 
-3. **Update JWT Settings (Production)**
+4. **Update JWT Settings (Production)**
 For production, change the `SecretKey` in `appsettings.json`:
 ```json
 "JwtSettings": {
@@ -128,17 +144,31 @@ For production, change the `SecretKey` in `appsettings.json`:
 }
 ```
 
-4. **Create Database**
+5. **Create Database**
+
+**Option 1: Using .NET CLI (Recommended)**
 ```bash
 dotnet ef database update
 ```
 
-5. **Run the Application**
+**Option 2: Using Package Manager Console (Visual Studio)**
+
+First, ensure EF Core tools are installed (see step 2), then in Package Manager Console:
+```powershell
+# If you prefer PowerShell commands in VS, use:
+dotnet ef database update
+
+# Note: The 'Update-Database' command is a PowerShell-specific command 
+# that requires the older EF6 tools or special configuration.
+# For EF Core projects, use 'dotnet ef database update' instead.
+```
+
+6. **Run the Application**
 ```bash
 dotnet run
 ```
 
-6. **Access Swagger UI**
+7. **Access Swagger UI**
 Navigate to: `https://localhost:<port>/` or `http://localhost:<port>/`
 
 ## Features
@@ -210,6 +240,58 @@ Navigate to: `https://localhost:<port>/` or `http://localhost:<port>/`
 ```bash
 dotnet ef migrations add MigrationName
 dotnet ef database update
+```
+
+## Troubleshooting
+
+### Issue: `update-database` command not recognized
+
+**Error Message:**
+```
+The term 'update-database' is not recognized as the name of a cmdlet, function, script file, or operable program.
+```
+
+**Solution:**
+
+The `Update-Database` command is from Entity Framework 6 (EF6), but this project uses Entity Framework Core (EF Core), which has different command-line tools.
+
+**To fix this:**
+
+1. **Install EF Core Tools globally** (if not already installed):
+   ```bash
+   dotnet tool install --global dotnet-ef
+   ```
+
+2. **Use the correct command** for EF Core:
+   ```bash
+   # In terminal/command prompt:
+   dotnet ef database update
+   
+   # In Package Manager Console (Visual Studio):
+   dotnet ef database update
+   ```
+
+3. **Verify the tools are installed:**
+   ```bash
+   dotnet ef --version
+   ```
+
+**Why this happens:**
+- `Update-Database` is for EF6 (older version)
+- `dotnet ef database update` is for EF Core (current version)
+- This project uses EF Core 8.0, so you must use `dotnet ef` commands
+
+### Issue: `dotnet-ef` not found
+
+**Solution:**
+Install the EF Core tools globally:
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+Or update if already installed:
+```bash
+dotnet tool update --global dotnet-ef
 ```
 
 ## Security Notes
