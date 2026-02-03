@@ -1,0 +1,90 @@
+Household-Bidding-Backend/
+│
+├── Controllers/                      # API Controllers (5 controllers, 27 endpoints)
+│   ├── AdminController.cs           # Admin management (6 endpoints)
+│   ├── AuthController.cs            # Authentication (3 endpoints)
+│   ├── CustomerController.cs        # Customer operations (10 endpoints)
+│   ├── MasterDataController.cs      # Master data (2 endpoints)
+│   └── WorkerController.cs          # Worker operations (6 endpoints)
+│
+├── Data/                             # Database Context & Seeding
+│   ├── ApplicationDbContext.cs      # EF Core DbContext with Fluent API
+│   └── DataSeeder.cs                # Master data seeding
+│
+├── DTOs/                             # Data Transfer Objects
+│   ├── Admin/
+│   │   └── AdminDtos.cs             # User/Task/Payment/Review management DTOs
+│   ├── Auth/
+│   │   └── AuthDtos.cs              # Register, Login, User profile DTOs
+│   ├── Customer/
+│   │   └── CustomerDtos.cs          # Task, Bid, Payment, Review DTOs
+│   ├── MasterData/
+│   │   └── MasterDataDtos.cs        # City, ServiceCategory DTOs
+│   └── Worker/
+│       └── WorkerDtos.cs            # NearbyTask, Bid, Assignment DTOs
+│
+├── Migrations/                       # EF Core Database Migrations
+│   ├── 20260203064526_InitialCreate.cs
+│   ├── 20260203064526_InitialCreate.Designer.cs
+│   └── ApplicationDbContextModelSnapshot.cs
+│
+├── Models/
+│   ├── Entities/                     # Domain Entities (12 entities)
+│   │   ├── Bid.cs                   # Worker bids on tasks
+│   │   ├── City.cs                  # Kerala cities (master data)
+│   │   ├── CustomerProfile.cs       # Customer profile
+│   │   ├── Payment.cs               # Payment records
+│   │   ├── Review.cs                # Customer reviews
+│   │   ├── ServiceCategory.cs       # Service types (master data)
+│   │   ├── Task.cs                  # Customer tasks
+│   │   ├── TaskAssignment.cs        # Worker assignments (one active per worker)
+│   │   ├── TaskRevision.cs          # Revision requests
+│   │   ├── User.cs                  # User accounts
+│   │   ├── WorkerProfile.cs         # Worker profile with location
+│   │   └── WorkerSkill.cs           # Worker skills (many-to-many)
+│   │
+│   └── Enums/                        # Status Enumerations (4 enums)
+│       ├── BidStatus.cs             # Pending, Accepted, Rejected
+│       ├── PaymentStatus.cs         # Pending, Completed, Failed, Refunded
+│       ├── TaskStatus.cs            # Open, Assigned, InProgress, Completed, Incomplete
+│       └── UserRole.cs              # Customer, Worker, Admin
+│
+├── Services/                         # Business Logic Services (7 services)
+│   ├── AdminService.cs              # Admin operations & analytics
+│   ├── AuthService.cs               # Registration & authentication
+│   ├── CustomerService.cs           # Task lifecycle management
+│   ├── LocationService.cs           # Haversine distance calculation
+│   ├── ProfileService.cs            # User-Profile mapping
+│   ├── TokenService.cs              # JWT token generation
+│   └── WorkerService.cs             # Worker operations & task execution
+│
+├── Properties/
+│   └── launchSettings.json          # Development settings
+│
+├── .gitignore                        # Git ignore rules
+├── API_TESTING.md                    # API testing guide with examples
+├── Household-Bidding.csproj          # Project file with dependencies
+├── Program.cs                        # Application entry point & configuration
+├── README.md                         # Complete project documentation
+├── appsettings.json                  # Application configuration
+└── appsettings.Development.json      # Development configuration
+
+KEY FEATURES:
+─────────────
+✓ 27 REST API Endpoints (Swagger documented)
+✓ JWT Authentication with Role-Based Authorization
+✓ Haversine Distance Calculation (15km radius)
+✓ Filtered Unique Index (One Active Task Per Worker)
+✓ Complete Task Lifecycle Management
+✓ Master Data Seeding (10 Kerala Cities, 8 Service Categories)
+✓ Production-Ready Architecture
+✓ CORS Enabled for Angular Frontend
+
+TECHNOLOGY STACK:
+─────────────────
+• ASP.NET Core 8.0
+• Entity Framework Core (Code-First)
+• SQL Server
+• JWT Authentication
+• BCrypt Password Hashing
+• Swagger/OpenAPI 3.0
