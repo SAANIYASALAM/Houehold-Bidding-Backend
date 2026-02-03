@@ -12,31 +12,40 @@ namespace Household_Bidding.Controllers;
 public class WorkerController : ControllerBase
 {
     private readonly IWorkerService _workerService;
+    private readonly IProfileService _profileService;
 
-    public WorkerController(IWorkerService workerService)
+    public WorkerController(IWorkerService workerService, IProfileService profileService)
     {
         _workerService = workerService;
+        _profileService = profileService;
     }
 
-    private int GetWorkerProfileId()
+    private async System.Threading.Tasks.Task<int> GetWorkerProfileIdAsync()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
         {
             throw new UnauthorizedAccessException("Invalid token");
         }
-        return userId; // This would be replaced with actual profile ID lookup
+        
+        var profileId = await _profileService.GetWorkerProfileIdAsync(userId);
+        if (profileId == null)
+        {
+            throw new InvalidOperationException("Worker profile not found");
+        }
+        
+        return profileId.Value;
     }
 
     /// <summary>
     /// Get nearby tasks within 15km radius
     /// </summary>
     [HttpGet("tasks/nearby")]
-    public async Task<ActionResult<List<NearbyTaskDto>>> GetNearbyTasks()
+    public async System.Threading.Tasks.Task<ActionResult<List<NearbyTaskDto>>> GetNearbyTasks()
     {
         try
         {
-            var workerProfileId = GetWorkerProfileId();
+            var workerProfileId = await GetWorkerProfileIdAsync();
             var tasks = await _workerService.GetNearbyTasksAsync(workerProfileId);
             return Ok(tasks);
         }
@@ -50,11 +59,11 @@ public class WorkerController : ControllerBase
     /// Create a bid on a task
     /// </summary>
     [HttpPost("bids")]
-    public async Task<ActionResult<WorkerBidDto>> CreateBid([FromBody] CreateBidRequest request)
+    public async System.Threading.Tasks.Task<ActionResult<WorkerBidDto>> CreateBid([FromBody] CreateBidRequest request)
     {
         try
         {
-            var workerProfileId = GetWorkerProfileId();
+            var workerProfileId = await GetWorkerProfileIdAsync();
             var bid = await _workerService.CreateBidAsync(workerProfileId, request);
             return Ok(bid);
         }
@@ -68,11 +77,11 @@ public class WorkerController : ControllerBase
     /// Get all my bids
     /// </summary>
     [HttpGet("bids")]
-    public async Task<ActionResult<List<WorkerBidDto>>> GetMyBids()
+    public async System.Threading.Tasks.Task<ActionResult<List<WorkerBidDto>>> GetMyBids()
     {
         try
         {
-            var workerProfileId = GetWorkerProfileId();
+            var workerProfileId = await GetWorkerProfileIdAsync();
             var bids = await _workerService.GetMyBidsAsync(workerProfileId);
             return Ok(bids);
         }
@@ -86,11 +95,11 @@ public class WorkerController : ControllerBase
     /// Get current active task
     /// </summary>
     [HttpGet("tasks/active")]
-    public async Task<ActionResult<WorkerTaskAssignmentDto>> GetActiveTask()
+    public async System.Threading.Tasks.Task<ActionResult<WorkerTaskAssignmentDto>> GetActiveTask()
     {
         try
         {
-            var workerProfileId = GetWorkerProfileId();
+            var workerProfileId = await GetWorkerProfileIdAsync();
             var task = await _workerService.GetActiveTaskAsync(workerProfileId);
             if (task == null)
             {
@@ -108,11 +117,11 @@ public class WorkerController : ControllerBase
     /// Start work on assigned task
     /// </summary>
     [HttpPost("tasks/{taskId}/start")]
-    public async Task<ActionResult<WorkerTaskAssignmentDto>> StartTask(int taskId)
+    public async System.Threading.Tasks.Task<ActionResult<WorkerTaskAssignmentDto>> StartTask(int taskId)
     {
         try
         {
-            var workerProfileId = GetWorkerProfileId();
+            var workerProfileId = await GetWorkerProfileIdAsync();
             var task = await _workerService.StartTaskAsync(taskId, workerProfileId);
             return Ok(task);
         }
@@ -126,11 +135,11 @@ public class WorkerController : ControllerBase
     /// Complete task (mark as complete or incomplete)
     /// </summary>
     [HttpPost("tasks/{taskId}/complete")]
-    public async Task<ActionResult<WorkerTaskAssignmentDto>> CompleteTask(int taskId, [FromQuery] bool isComplete = true)
+    public async System.Threading.Tasks.Task<ActionResult<WorkerTaskAssignmentDto>> CompleteTask(int taskId, [FromQuery] bool isComplete = true)
     {
         try
         {
-            var workerProfileId = GetWorkerProfileId();
+            var workerProfileId = await GetWorkerProfileIdAsync();
             var task = await _workerService.CompleteTaskAsync(taskId, workerProfileId, isComplete);
             return Ok(task);
         }

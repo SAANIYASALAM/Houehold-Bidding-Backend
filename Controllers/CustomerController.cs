@@ -12,33 +12,40 @@ namespace Household_Bidding.Controllers;
 public class CustomerController : ControllerBase
 {
     private readonly ICustomerService _customerService;
+    private readonly IProfileService _profileService;
 
-    public CustomerController(ICustomerService customerService)
+    public CustomerController(ICustomerService customerService, IProfileService profileService)
     {
         _customerService = customerService;
+        _profileService = profileService;
     }
 
-    private int GetCustomerProfileId()
+    private async System.Threading.Tasks.Task<int> GetCustomerProfileIdAsync()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
         {
             throw new UnauthorizedAccessException("Invalid token");
         }
-        // In a real scenario, we'd fetch the customer profile ID from the user ID
-        // For simplicity, assuming the claim contains profile information
-        return userId; // This would be replaced with actual profile ID lookup
+        
+        var profileId = await _profileService.GetCustomerProfileIdAsync(userId);
+        if (profileId == null)
+        {
+            throw new InvalidOperationException("Customer profile not found");
+        }
+        
+        return profileId.Value;
     }
 
     /// <summary>
     /// Create a new task
     /// </summary>
     [HttpPost("tasks")]
-    public async Task<ActionResult<TaskDto>> CreateTask([FromBody] CreateTaskRequest request)
+    public async System.Threading.Tasks.Task<ActionResult<TaskDto>> CreateTask([FromBody] CreateTaskRequest request)
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             var task = await _customerService.CreateTaskAsync(customerProfileId, request);
             return Ok(task);
         }
@@ -52,11 +59,11 @@ public class CustomerController : ControllerBase
     /// Update a task
     /// </summary>
     [HttpPut("tasks/{taskId}")]
-    public async Task<ActionResult<TaskDto>> UpdateTask(int taskId, [FromBody] UpdateTaskRequest request)
+    public async System.Threading.Tasks.Task<ActionResult<TaskDto>> UpdateTask(int taskId, [FromBody] UpdateTaskRequest request)
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             var task = await _customerService.UpdateTaskAsync(taskId, customerProfileId, request);
             return Ok(task);
         }
@@ -70,11 +77,11 @@ public class CustomerController : ControllerBase
     /// Delete a task
     /// </summary>
     [HttpDelete("tasks/{taskId}")]
-    public async Task<ActionResult> DeleteTask(int taskId)
+    public async System.Threading.Tasks.Task<ActionResult> DeleteTask(int taskId)
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             await _customerService.DeleteTaskAsync(taskId, customerProfileId);
             return NoContent();
         }
@@ -88,11 +95,11 @@ public class CustomerController : ControllerBase
     /// Get all my tasks
     /// </summary>
     [HttpGet("tasks")]
-    public async Task<ActionResult<List<TaskDto>>> GetMyTasks()
+    public async System.Threading.Tasks.Task<ActionResult<List<TaskDto>>> GetMyTasks()
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             var tasks = await _customerService.GetMyTasksAsync(customerProfileId);
             return Ok(tasks);
         }
@@ -106,11 +113,11 @@ public class CustomerController : ControllerBase
     /// Get a specific task by ID
     /// </summary>
     [HttpGet("tasks/{taskId}")]
-    public async Task<ActionResult<TaskDto>> GetTaskById(int taskId)
+    public async System.Threading.Tasks.Task<ActionResult<TaskDto>> GetTaskById(int taskId)
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             var task = await _customerService.GetTaskByIdAsync(taskId, customerProfileId);
             return Ok(task);
         }
@@ -124,11 +131,11 @@ public class CustomerController : ControllerBase
     /// Get bids for a specific task
     /// </summary>
     [HttpGet("tasks/{taskId}/bids")]
-    public async Task<ActionResult<List<BidDto>>> GetTaskBids(int taskId)
+    public async System.Threading.Tasks.Task<ActionResult<List<BidDto>>> GetTaskBids(int taskId)
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             var bids = await _customerService.GetTaskBidsAsync(taskId, customerProfileId);
             return Ok(bids);
         }
@@ -142,11 +149,11 @@ public class CustomerController : ControllerBase
     /// Assign a worker to a task
     /// </summary>
     [HttpPost("tasks/{taskId}/assign")]
-    public async Task<ActionResult<TaskDto>> AssignWorker(int taskId, [FromBody] AssignWorkerRequest request)
+    public async System.Threading.Tasks.Task<ActionResult<TaskDto>> AssignWorker(int taskId, [FromBody] AssignWorkerRequest request)
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             var task = await _customerService.AssignWorkerAsync(taskId, customerProfileId, request);
             return Ok(task);
         }
@@ -160,11 +167,11 @@ public class CustomerController : ControllerBase
     /// Request a revision for incomplete task
     /// </summary>
     [HttpPost("tasks/{taskId}/revision")]
-    public async Task<ActionResult<TaskRevisionDto>> RequestRevision(int taskId, [FromBody] TaskRevisionRequest request)
+    public async System.Threading.Tasks.Task<ActionResult<TaskRevisionDto>> RequestRevision(int taskId, [FromBody] TaskRevisionRequest request)
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             var revision = await _customerService.RequestRevisionAsync(taskId, customerProfileId, request);
             return Ok(revision);
         }
@@ -178,11 +185,11 @@ public class CustomerController : ControllerBase
     /// Make payment for completed task
     /// </summary>
     [HttpPost("tasks/{taskId}/payment")]
-    public async Task<ActionResult<PaymentDto>> MakePayment(int taskId, [FromBody] PaymentRequest request)
+    public async System.Threading.Tasks.Task<ActionResult<PaymentDto>> MakePayment(int taskId, [FromBody] PaymentRequest request)
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             var payment = await _customerService.MakePaymentAsync(taskId, customerProfileId, request);
             return Ok(payment);
         }
@@ -196,11 +203,11 @@ public class CustomerController : ControllerBase
     /// Create review for completed task
     /// </summary>
     [HttpPost("tasks/{taskId}/review")]
-    public async Task<ActionResult<ReviewDto>> CreateReview(int taskId, [FromBody] ReviewRequest request)
+    public async System.Threading.Tasks.Task<ActionResult<ReviewDto>> CreateReview(int taskId, [FromBody] ReviewRequest request)
     {
         try
         {
-            var customerProfileId = GetCustomerProfileId();
+            var customerProfileId = await GetCustomerProfileIdAsync();
             var review = await _customerService.CreateReviewAsync(taskId, customerProfileId, request);
             return Ok(review);
         }
