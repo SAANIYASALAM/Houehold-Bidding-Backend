@@ -2,6 +2,8 @@
 
 Production-ready ASP.NET Core backend for a household services bidding platform in Kerala, India.
 
+> 📚 **New to this project?** Check out the [Quick Setup Guide](SETUP_GUIDE.md) for fast installation and common commands.
+
 ## Tech Stack
 
 - **Backend**: ASP.NET Core (.NET 8)
