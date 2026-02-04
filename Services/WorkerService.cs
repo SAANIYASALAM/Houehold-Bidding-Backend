@@ -15,6 +15,7 @@ public interface IWorkerService
     System.Threading.Tasks.Task<WorkerTaskAssignmentDto?> GetActiveTaskAsync(int workerProfileId);
     System.Threading.Tasks.Task<WorkerTaskAssignmentDto> StartTaskAsync(int taskId, int workerProfileId);
     System.Threading.Tasks.Task<WorkerTaskAssignmentDto> CompleteTaskAsync(int taskId, int workerProfileId, bool isComplete);
+    System.Threading.Tasks.Task<WorkerExperienceDto> SubmitExperienceAsync(int workerProfileId, WorkerExperienceRequest request);
 }
 
 public class WorkerService : IWorkerService
@@ -41,32 +42,20 @@ public class WorkerService : IWorkerService
             throw new InvalidOperationException("Worker profile not found");
         }
 
-        // Get worker's skill category IDs
         var skillCategoryIds = workerProfile.WorkerSkills.Select(ws => ws.ServiceCategoryId).ToList();
 
-        // Get open tasks in same city with matching skills
         var tasks = await _context.Tasks
             .Include(t => t.CustomerProfile).ThenInclude(cp => cp.User)
             .Include(t => t.ServiceCategory)
             .Include(t => t.Bids)
-            .Where(t => 
-                t.Status == TaskStatusEnum.Open &&
-                t.CityId == workerProfile.CityId &&
-                skillCategoryIds.Contains(t.ServiceCategoryId))
+            .Where(t => t.Status == TaskStatusEnum.Open && t.CityId == workerProfile.CityId && skillCategoryIds.Contains(t.ServiceCategoryId))
             .ToListAsync();
 
-        // Filter by distance and map to DTO
         var nearbyTasks = new List<NearbyTaskDto>();
 
         foreach (var task in tasks)
         {
-            var distance = _locationService.CalculateDistance(
-                workerProfile.Latitude,
-                workerProfile.Longitude,
-                task.Latitude,
-                task.Longitude
-            );
-
+            var distance = _locationService.CalculateDistance(workerProfile.Latitude, workerProfile.Longitude, task.Latitude, task.Longitude);
             if (distance <= MaxDistanceKm)
             {
                 nearbyTasks.Add(new NearbyTaskDto
@@ -95,37 +84,15 @@ public class WorkerService : IWorkerService
 
     public async Task<WorkerBidDto> CreateBidAsync(int workerProfileId, CreateBidRequest request)
     {
-        // Check if worker has an active task
-        var hasActiveTask = await _context.TaskAssignments
-            .AnyAsync(ta => ta.WorkerProfileId == workerProfileId && ta.IsActive);
+        var hasActiveTask = await _context.TaskAssignments.AnyAsync(ta => ta.WorkerProfileId == workerProfileId && ta.IsActive);
+        if (hasActiveTask) throw new InvalidOperationException("Cannot bid on tasks while you have an active task");
 
-        if (hasActiveTask)
-        {
-            throw new InvalidOperationException("Cannot bid on tasks while you have an active task");
-        }
+        var task = await _context.Tasks.Include(t => t.CustomerProfile).ThenInclude(cp => cp.User).FirstOrDefaultAsync(t => t.Id == request.TaskId);
+        if (task == null) throw new InvalidOperationException("Task not found");
+        if (task.Status != TaskStatusEnum.Open) throw new InvalidOperationException("Task is not open for bidding");
 
-        var task = await _context.Tasks
-            .Include(t => t.CustomerProfile).ThenInclude(cp => cp.User)
-            .FirstOrDefaultAsync(t => t.Id == request.TaskId);
-
-        if (task == null)
-        {
-            throw new InvalidOperationException("Task not found");
-        }
-
-        if (task.Status != TaskStatusEnum.Open)
-        {
-            throw new InvalidOperationException("Task is not open for bidding");
-        }
-
-        // Check if worker already bid on this task
-        var existingBid = await _context.Bids
-            .FirstOrDefaultAsync(b => b.TaskId == request.TaskId && b.WorkerProfileId == workerProfileId);
-
-        if (existingBid != null)
-        {
-            throw new InvalidOperationException("You have already bid on this task");
-        }
+        var existingBid = await _context.Bids.FirstOrDefaultAsync(b => b.TaskId == request.TaskId && b.WorkerProfileId == workerProfileId);
+        if (existingBid != null) throw new InvalidOperationException("You have already bid on this task");
 
         var bid = new Bid
         {
@@ -270,7 +237,6 @@ public class WorkerService : IWorkerService
         assignment.Task.UpdatedAt = DateTime.UtcNow;
         assignment.UpdatedAt = DateTime.UtcNow;
 
-        // If task is completed or incomplete (revision resolved), mark assignment as inactive
         if (isComplete)
         {
             assignment.IsActive = false;
@@ -292,6 +258,47 @@ public class WorkerService : IWorkerService
             StartedAt = assignment.StartedAt,
             CompletedAt = assignment.CompletedAt,
             BidAmount = assignment.Bid.ProposedAmount
+        };
+    }
+
+    public async Task<WorkerExperienceDto> SubmitExperienceAsync(int workerProfileId, WorkerExperienceRequest request)
+    {
+        // Ensure the worker has an assignment for this task and it is completed
+        var assignment = await _context.TaskAssignments
+            .Include(ta => ta.Task)
+            .FirstOrDefaultAsync(ta => ta.TaskId == request.TaskId && ta.WorkerProfileId == workerProfileId);
+
+        if (assignment == null)
+        {
+            throw new InvalidOperationException("Task assignment not found for this worker");
+        }
+
+        if (assignment.Task.Status != TaskStatusEnum.Completed && assignment.Task.Status != TaskStatusEnum.Incomplete)
+        {
+            throw new InvalidOperationException("Can only submit experience after task is completed or marked incomplete");
+        }
+
+        var experience = new WorkerExperience
+        {
+            TaskId = request.TaskId,
+            WorkerProfileId = workerProfileId,
+            HoursWorked = request.HoursWorked,
+            Notes = request.Notes ?? string.Empty,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.WorkerExperiences.Add(experience);
+        await _context.SaveChangesAsync();
+
+        return new WorkerExperienceDto
+        {
+            Id = experience.Id,
+            TaskId = experience.TaskId,
+            WorkerProfileId = experience.WorkerProfileId,
+            HoursWorked = experience.HoursWorked,
+            Notes = experience.Notes,
+            CreatedAt = experience.CreatedAt
         };
     }
 }

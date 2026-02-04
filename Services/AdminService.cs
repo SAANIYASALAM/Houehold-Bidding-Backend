@@ -12,12 +12,12 @@ public interface IAdminService
     System.Threading.Tasks.Task<List<TaskManagementDto>> GetAllTasksAsync();
     System.Threading.Tasks.Task<List<PaymentManagementDto>> GetAllPaymentsAsync();
     System.Threading.Tasks.Task<List<ReviewManagementDto>> GetAllReviewsAsync();
+    System.Threading.Tasks.Task<List<WorkerExperienceManagementDto>> GetAllWorkerExperiencesAsync();
     System.Threading.Tasks.Task SuspendUserAsync(int userId, bool suspend);
     System.Threading.Tasks.Task<DashboardStatsDto> GetDashboardStatsAsync();
 }
-
 public class AdminService : IAdminService
-{
+{   
     private readonly ApplicationDbContext _context;
 
     public AdminService(ApplicationDbContext context)
@@ -41,6 +41,26 @@ public class AdminService : IAdminService
             IsActive = u.IsActive,
             IsSuspended = u.IsSuspended,
             CreatedAt = u.CreatedAt
+        }).ToList();
+    }
+
+    public async Task<List<WorkerExperienceManagementDto>> GetAllWorkerExperiencesAsync()
+    {
+        var experiences = await _context.WorkerExperiences
+            .Include(e => e.Task)
+            .Include(e => e.WorkerProfile).ThenInclude(wp => wp.User)
+            .OrderByDescending(e => e.CreatedAt)
+            .ToListAsync();
+
+        return experiences.Select(e => new WorkerExperienceManagementDto
+        {
+            Id = e.Id,
+            TaskId = e.TaskId,
+            TaskTitle = e.Task.Title,
+            WorkerName = e.WorkerProfile.User.FullName,
+            HoursWorked = e.HoursWorked,
+            Notes = e.Notes,
+            CreatedAt = e.CreatedAt
         }).ToList();
     }
 
